@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결과</title>
+</head>
+<body>
+    <h1>워터마크 생성 성공</h1>
+    <p>결과 이미지의 경로: {{ url_for('static', filename='uploads/' + filename) }}</p>
+    <form action="/returnToHome" method="post">
+        <button type="submit">뒤로가기</button>
+    </form>
+</body>
+</html>

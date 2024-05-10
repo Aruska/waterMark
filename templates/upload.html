@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이미지 워터마크 생성기</title>
+</head>
+<body>
+    <h1>이미지 워터마크 생성기</h1>
+    <form action="/" method="post" enctype="multipart/form-data" id="upload_form">
+        <label for="image_file">워터마크를 넣을 이미지:</label>
+        <input type="file" id="image_file" name="image_file"><br><br>
+        
+        <label for="watermark_file">워터마크 이미지:</label>
+        <input type="file" id="watermark_file" name="watermark_file" disabled><br><br>
+        
+        <label><input type="checkbox" id="use_default_watermark" name="use_default_watermark" value="yes" checked> 기본 워터마크 사용</label><br><br>
+        
+        <input type="submit" value="워터마크 넣기">
+    </form>
+
+    <script>
+        // 페이지 로드 시에 기본 워터마크 체크박스 상태 확인
+        var useDefaultWatermarkCheckbox = document.getElementById('use_default_watermark');
+        var watermarkFileInput = document.getElementById('watermark_file');
+        if (useDefaultWatermarkCheckbox.checked) {
+            // 기본 워터마크가 체크된 상태이면 워터마크 이미지 입력 필드를 비활성화
+            watermarkFileInput.disabled = true;
+        }
+
+        // 체크박스 상태가 변경될 때마다 워터마크 이미지 입력 필드 상태 조정
+        useDefaultWatermarkCheckbox.addEventListener('change', function() {
+            watermarkFileInput.disabled = this.checked;
+        });
+    </script>
+</body>
+</html>
