@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>워터마크 생성 성공</h1>
-    <p>결과 이미지의 경로: {{ url_for('static', filename='uploads/' + filename) }}</p>
+    <p>결과 이미지의 경로: {{ url_for('static', filename='uploads/') }}</p>
     <form action="/returnToHome" method="post">
         <button type="submit">뒤로가기</button>
     </form>

@@ -4,34 +4,160 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>이미지 워터마크 생성기</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: left;
+            align-items: flex-start;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .form-container {
+            flex: 1;
+        }
+        .logo-container {
+            flex: 1;
+        }
+        .logo-size {
+            width: 400px;
+            height: 200px;
+        }
+        .preview-container {
+            flex: 1;
+        }
+        .preview img, .preview canvas {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>이미지 워터마크 생성기</h1>
-    <form action="/" method="post" enctype="multipart/form-data" id="upload_form">
-        <label for="image_file">워터마크를 넣을 이미지:</label>
-        <input type="file" id="image_file" name="image_file"><br><br>
-        
-        <label for="watermark_file">워터마크 이미지:</label>
-        <input type="file" id="watermark_file" name="watermark_file" disabled><br><br>
-        
-        <label><input type="checkbox" id="use_default_watermark" name="use_default_watermark" value="yes" checked> 기본 워터마크 사용</label><br><br>
-        
-        <input type="submit" value="워터마크 넣기">
-    </form>
+    <div class="container">
+        <div class="logo-container">
+            <img src="static/image/Eterno_Design_Logo_-_PNG.png" class="logo-size" alt="Logo">
+        </div>
+        <div class="form-container">
+            <h1>이미지 워터마크 생성기</h1>
+            <form action="/" method="post" enctype="multipart/form-data" id="upload_form">
+                <label for="image_files">워터마크를 넣을 이미지:</label>
+                <input type="file" id="image_files" name="image_files" multiple><br><br>
+
+                <label for="watermark_file">워터마크 이미지:</label>
+                <input type="file" id="watermark_file" name="watermark_file"><br><br>
+
+                <label><input type="checkbox" id="use_default_watermark" name="use_default_watermark" value="yes" checked> 기본 워터마크 사용</label><br><br>
+
+                <label for="watermark_percentage">워터마크 크기 :</label>
+                <input type="number" id="watermark_percentage" name="watermark_percentage" min="1" max="100" value="25">
+                <button type="button" id="apply_watermark">미리보기 적용</button><br><br>
+
+                <input type="submit" value="워터마크 넣기">
+            </form>
+        </div>
+        <div class="preview-container">
+            <div class="preview" id="preview">
+                <h2>미리보기</h2>
+                <div id="preview_images"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // 페이지 로드 시에 기본 워터마크 체크박스 상태 확인
         var useDefaultWatermarkCheckbox = document.getElementById('use_default_watermark');
         var watermarkFileInput = document.getElementById('watermark_file');
+        var imageFilesInput = document.getElementById('image_files');
+        var watermarkPercentageInput = document.getElementById('watermark_percentage');
+        var applyWatermarkButton = document.getElementById('apply_watermark');
+        var previewImagesContainer = document.getElementById('preview_images');
+        var watermarkImage = null;
+
         if (useDefaultWatermarkCheckbox.checked) {
-            // 기본 워터마크가 체크된 상태이면 워터마크 이미지 입력 필드를 비활성화
             watermarkFileInput.disabled = true;
         }
 
-        // 체크박스 상태가 변경될 때마다 워터마크 이미지 입력 필드 상태 조정
         useDefaultWatermarkCheckbox.addEventListener('change', function() {
             watermarkFileInput.disabled = this.checked;
         });
+
+        imageFilesInput.addEventListener('change', function() {
+            loadPreviewImages();
+        });
+
+        watermarkFileInput.addEventListener('change', function() {
+            var file = watermarkFileInput.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    watermarkImage = new Image();
+                    watermarkImage.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        applyWatermarkButton.addEventListener('click', function() {
+            previewImagesContainer.innerHTML = '';
+            loadPreviewImages(true);
+        });
+
+        function loadPreviewImages(applyWatermark = false) {
+            var files = imageFilesInput.files;
+            if (files) {
+                for (var i = 0; i < files.length; i++) {
+                    var reader = new FileReader();
+                    reader.onload = (function(fileIndex) {
+                        return function(e) {
+                            var img = document.createElement('img');
+                            img.src = e.target.result;
+                            previewImagesContainer.appendChild(img);
+                            if (applyWatermark) {
+                                var watermarkSize = watermarkPercentageInput.value;
+                                var watermarkSrc = useDefaultWatermarkCheckbox.checked ? 'static/image/Eterno_Design_Logo_-_PNG.png' : (watermarkImage ? watermarkImage.src : null);
+                                if (watermarkSrc) {
+                                    applyWatermarkToImage(img, watermarkSrc, watermarkSize, fileIndex);
+                                }
+                            }
+                        }
+                    })(i);
+                    reader.readAsDataURL(files[i]);
+                }
+            }
+        }
+
+        function applyWatermarkToImage(image, watermarkSrc, watermarkSize, index) {
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+
+            var img = new Image();
+            img.src = image.src;
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                var watermark = new Image();
+                watermark.src = watermarkSrc;
+                watermark.onload = function() {
+                    var watermarkWidth = canvas.width * (watermarkSize / 100);
+                    var aspectRatio = watermark.width / watermark.height;
+                    var watermarkHeight = watermarkWidth / aspectRatio;
+                    var x = (canvas.width - watermarkWidth) / 2;
+                    var y = (canvas.height - watermarkHeight) / 2;
+                    ctx.drawImage(watermark, x, y, watermarkWidth, watermarkHeight);
+
+                    // 이미지를 캔버스로 대체
+                    if (previewImagesContainer.children[index]) {
+                        previewImagesContainer.replaceChild(canvas, previewImagesContainer.children[index]);
+                    }
+                }
+            }
+        }
     </script>
 </body>
 </html>
